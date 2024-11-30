@@ -55,20 +55,21 @@ def home():
 def select_quality():
     url = request.form['url']
     try:
-        # Obtener las opciones de calidad
-        ydl_opts = {'noplaylist': True}
+        ydl_opts = {
+            'noplaylist': True,
+            'cookies': './cookies.txt'  # Ruta al archivo de cookies
+        }
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             formats = info.get('formats', [])
 
-            # Filtrar las opciones combinadas de video+audio y en formato mp4
             video_options = [
                 {
                     'format_id': f['format_id'],
                     'format_note': f.get('format_note', 'Desconocida'),
                     'filesize_approx': f.get('filesize_approx', None) // (1024 * 1024) if f.get('filesize_approx') else None
                 }
-                for f in formats if f.get('acodec') != 'none' and f.get('vcodec') != 'none' and 'mp4' in f['ext']
+                for f in formats if f.get('acodec') != 'none' and f.get('vcodec') != 'none'
             ]
 
         return render_template_string(QUALITY_SELECTION_TEMPLATE, options=video_options, url=url)
@@ -83,10 +84,10 @@ def download():
     os.makedirs(output_dir, exist_ok=True)
 
     try:
-        # Descargar el video en la calidad seleccionada (solo combinados)
         ydl_opts = {
             'format': quality,
-            'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s')
+            'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
+            'cookies': './cookies.txt'  # Ruta al archivo de cookies
         }
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
